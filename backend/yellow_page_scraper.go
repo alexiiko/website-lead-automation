@@ -9,7 +9,7 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-func searchForWebsites(city string, industry string, headless bool) ([]string, error) {
+func SearchForWebsites(city string, industry string, headless bool) ([]string, error) {
 	websites := []string{};
 
 	pw, err := playwright.Run()
@@ -172,9 +172,6 @@ func searchForWebsites(city string, industry string, headless bool) ([]string, e
 		}
 		websites = append(websites, string(businessWebsiteUrl))
 	}
-
-
-  println(len(websites))
 
 	return websites,nil
 }

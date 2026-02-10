@@ -2,8 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
-	_ "website-lead-automation-go/backend"
+	"website-lead-automation-go/backend"
 )
 
 // App struct
@@ -22,12 +21,7 @@ func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
 }
 
-// Greet returns a greeting for the given name
-func (a *App) Greet(name string) string {
-	return fmt.Sprintf("Hello %s, It's show time!", name)
-}
-
-// send the website url to the frontend, with the lenght and show the status
-func (a *App) SearchForWebsites(city string, industry string) string {
-	return ""
+// send the website urls to the frontend
+func (a *App) SearchForWebsites(city string, industry string, headless bool) ([]string, error) {
+	return backend.SearchForWebsites(city, industry, headless)
 }

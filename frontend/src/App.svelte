@@ -1,79 +1,61 @@
 <script>
-  import logo from './assets/images/logo-universal.png'
-  import {Greet} from '../wailsjs/go/main/App.js'
+  import { SearchForWebsites } from "../wailsjs/go/main/app";
 
-  let resultText = "Please enter your name below 👇"
-  let name
+  let statusText = ""
+  let statusTextScreenshots = ""
+  let websiteUrls = null
 
-  function greet() {
-    Greet(name).then(result => resultText = result)
+  let city = ""
+  let industry = ""
+  let headless = false
+
+  let amountOfWebsites = 0
+
+  function searchForWebsites() {
+    if (city != "" && industry != "") {
+      SearchForWebsites(city, industry, !headless).then((result) => { // ! because when the value is true the browser gets launched in headless mode when it should be launched in head mode
+        websiteUrls = result
+        amountOfWebsites = websiteUrls.length
+      })
+    }
+  }
+
+  function takeScreenShotsOfWebsites() {
+    return null
+  }
+
+  function main() {
+    let array = []
+    statusText = "Fetching Urls..."
+    searchForWebsites()
+    statusText = "Taking screenshots of websites..."
+    for (let index = 0; index < array.length; index++) {
+      const element = array[index];
+      takeScreenShotsOfWebsites()
+    }
   }
 </script>
 
 <main>
-  <img alt="Wails logo" id="logo" src="{logo}">
-  <div class="result" id="result">{resultText}</div>
-  <div class="input-box" id="input">
-    <input autocomplete="off" bind:value={name} class="input" id="name" type="text"/>
-    <button class="btn" on:click={greet}>Greet</button>
+  <div id="inputs-container" class="inputs-container">
+    <div id="inputs">
+      <input id="industry-input" placeholder="Unternehmen" bind:value={industry}/>
+      <input id="city-input" placeholder="Stadt" bind:value={city}/>
+
+      <button on:click={searchForWebsites}>Suchen</button>
+    </div>
+
+    <div id="headless-checkbox-container">
+      <label id="headless-bool" class="switch" style="display: flex;">
+        <input type="checkbox" bind:value={headless}>
+        <p>Browser anzeigen</p>
+      </label>
+    </div> 
   </div>
 </main>
 
 <style>
-
-  #logo {
-    display: block;
-    width: 50%;
-    height: 50%;
-    margin: auto;
-    padding: 10% 0 0;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: 100% 100%;
-    background-origin: content-box;
+  .inputs-container {
+    display: flex;
   }
-
-  .result {
-    height: 20px;
-    line-height: 20px;
-    margin: 1.5rem auto;
-  }
-
-  .input-box .btn {
-    width: 60px;
-    height: 30px;
-    line-height: 30px;
-    border-radius: 3px;
-    border: none;
-    margin: 0 0 0 20px;
-    padding: 0 8px;
-    cursor: pointer;
-  }
-
-  .input-box .btn:hover {
-    background-image: linear-gradient(to top, #cfd9df 0%, #e2ebf0 100%);
-    color: #333333;
-  }
-
-  .input-box .input {
-    border: none;
-    border-radius: 3px;
-    outline: none;
-    height: 30px;
-    line-height: 30px;
-    padding: 0 10px;
-    background-color: rgba(240, 240, 240, 1);
-    -webkit-font-smoothing: antialiased;
-  }
-
-  .input-box .input:hover {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
-  }
-
-  .input-box .input:focus {
-    border: none;
-    background-color: rgba(255, 255, 255, 1);
-  }
-
 </style>
