@@ -16,7 +16,7 @@ func TakeScreenshotOfWebsite(websiteUrl string, headless bool) (string, string) 
 		Headless: playwright.Bool(headless),
 	})
 	if err != nil {
-		return "", "error launching the browser"
+		return "", "error opening the browser"
 	}
 
 	page, err := browser.NewPage()

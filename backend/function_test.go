@@ -3,7 +3,7 @@ package backend
 import "testing"
 
 func TestScrape(t *testing.T) {
-	result, err := searchForWebsites("Berlin", "Autoreparaturen", true)
+	result, err := SearchForWebsites("Berlin", "Autoreparaturen", true)
 	if err != nil {
 		t.Fatal(err)
 	}

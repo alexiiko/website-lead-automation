@@ -1,22 +1,28 @@
 <script>
-  import { SearchForWebsites } from "../wailsjs/go/main/app";
+  import { SearchForWebsites } from "../wailsjs/go/main/App";
 
   let statusText = ""
   let statusTextScreenshots = ""
-  let websiteUrls = null
+  let websiteUrls = []
 
-  let city = ""
-  let industry = ""
+  let city = "Berlin"
+  let industry = "Elektriker"
   let headless = false
 
   let amountOfWebsites = 0
 
-  function searchForWebsites() {
+  async function searchForWebsites() {
+    statusText = ""
     if (city != "" && industry != "") {
-      SearchForWebsites(city, industry, !headless).then((result) => { // ! because when the value is true the browser gets launched in headless mode when it should be launched in head mode
-        websiteUrls = result
+      try {
+        websiteUrls = await SearchForWebsites(city, industry, !headless)
         amountOfWebsites = websiteUrls.length
-      })
+        statusText = ""
+      } catch (error) {
+        statusText = "Fehler beim Suchen der Webseiten! \n" + "Fehlermeldung:  \n" + error.toString()
+      }
+    } else {
+      statusText = "Stadt und Industrie müssen ausgefüllt sein!"
     }
   }
 
@@ -47,10 +53,11 @@
 
     <div id="headless-checkbox-container">
       <label id="headless-bool" class="switch" style="display: flex;">
-        <input type="checkbox" bind:value={headless}>
+        <input type="checkbox" bind:checked={headless}>
         <p>Browser anzeigen</p>
       </label>
     </div> 
+    <p>{statusText}</p>
   </div>
 </main>
 

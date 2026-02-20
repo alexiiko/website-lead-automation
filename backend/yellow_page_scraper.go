@@ -37,6 +37,8 @@ func SearchForWebsites(city string, industry string, headless bool) ([]string, e
 		return nil, fmt.Errorf("error opening the website: %v", err)
 	}
 
+	fmt.Println("opened yellow page site")
+
 	// accept cookies
 	cookieLocator := page.Locator(".cmpboxbtn.cmpboxbtnyes.cmptxt_btn_yes")
 	err = cookieLocator.WaitFor(playwright.LocatorWaitForOptions{
