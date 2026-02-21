@@ -29,7 +29,3 @@ func (a *App) SearchForWebsites(city string, industry string, headless bool) ([]
 func (a *App) TakeScreenshotOfWebsite(url string, headless bool) (string, error) {
 	return backend.TakeScreenshotOfWebsite(url, headless)
 }
-
-func (a *App) ResetScreenshotsDir() error {
-	return backend.ResetScreenshotsDir()
-}

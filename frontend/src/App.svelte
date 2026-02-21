@@ -1,7 +1,6 @@
 <script>
   import { SearchForWebsites } from "../wailsjs/go/main/App"
   import { TakeScreenshotOfWebsite } from "../wailsjs/go/main/App"
-  import { ResetScreenshotsDir } from "../wailsjs/go/main/App"
 
   let statusText = ""
   let statusTextScreenshots = ""
@@ -39,20 +38,13 @@
   async function takeScreenShotsOfWebsite(url) {
     try {
       await TakeScreenshotOfWebsite(url, !headless)
-      statusText = "Screenshots von Webseiten machen..."
     } catch (error) {
       statusTextScreenshots = ""
       statusText = `Fehler beim Erstellen eines Screenshots bei dieser Webseite:  ${url} \n` + error.toString()
     }
   }
 
-  let screenshotProgress = 0
   async function main() {
-    await ResetScreenshotsDir()
-    statusText = ""
-    statusTextScreenshots = ""
-    statusTextUrls = ""
-
     statusText = "URLs sammeln..."
     searchButtonActive = false
     await searchForWebsites()
@@ -62,10 +54,9 @@
       const websiteUrl = websiteUrls[index];
       statusTextScreenshots = `Bei Website: ${websiteUrl} \n` + `${index}/${websiteUrls.length}`
       await takeScreenShotsOfWebsite(websiteUrl)
-      screenshotProgress++
     }
-    statusTextScreenshots = `${screenshotProgress} Screenshots von ${websiteUrls.length} Webseiten gemacht!`
-    statusText = ""
+    statusTextScreenshots = ""
+    statusText = "Screenshots von Webseiten gemacht!"
 
     searchButtonActive = true
   }
@@ -87,8 +78,8 @@
     </div> 
   </div>
   <p style="white-space: pre-line;">{statusTextUrls}</p>
-  <p style="white-space: pre-line;">{statusText}</p>
   <p style="white-space: pre-line;">{statusTextScreenshots}</p>
+  <p style="white-space: pre-line;">{statusText}</p>
 </main>
 
 <style>
