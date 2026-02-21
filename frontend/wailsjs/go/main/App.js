@@ -5,3 +5,7 @@
 export function SearchForWebsites(arg1, arg2, arg3) {
   return window['go']['main']['App']['SearchForWebsites'](arg1, arg2, arg3);
 }
+
+export function TakeScreenshotOfWebsite(arg1, arg2) {
+  return window['go']['main']['App']['TakeScreenshotOfWebsite'](arg1, arg2);
+}

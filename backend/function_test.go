@@ -13,8 +13,8 @@ func TestScrape(t *testing.T) {
 
 func TestWebsitescreenshot(t *testing.T) {
 	result, err := TakeScreenshotOfWebsite("https://www.gaebel-berlin.de", true)
-	if err != "" {
-		t.Fatal("error taking a screenshot: " + err)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	t.Log(result)

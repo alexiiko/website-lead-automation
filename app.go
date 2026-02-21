@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"website-lead-automation-go/backend"
 )
 
@@ -24,6 +23,9 @@ func (a *App) startup(ctx context.Context) {
 
 // send the website urls to the frontend
 func (a *App) SearchForWebsites(city string, industry string, headless bool) ([]string, error) {
-	fmt.Println("started search for websites")
 	return backend.SearchForWebsites(city, industry, headless)
+}
+
+func (a *App) TakeScreenshotOfWebsite(url string, headless bool) (string, error) {
+	return backend.TakeScreenshotOfWebsite(url, headless)
 }

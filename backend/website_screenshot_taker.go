@@ -6,29 +6,29 @@ import (
 	"github.com/playwright-community/playwright-go"
 )
 
-func TakeScreenshotOfWebsite(websiteUrl string, headless bool) (string, string) {
+func TakeScreenshotOfWebsite(websiteUrl string, headless bool) (string, error) {
 	pw, err := playwright.Run()
 	if err != nil {
-		return "", "error running playwright"
+		return "", err
 	}
 
 	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
 		Headless: playwright.Bool(headless),
 	})
 	if err != nil {
-		return "", "error opening the browser"
+		return "", err
 	}
 
 	page, err := browser.NewPage()
 	if err != nil {
-		return "", "error opening a page"
+		return "", err
 	}
 
 	_, err = page.Goto(websiteUrl, playwright.PageGotoOptions{
 		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 	})
 	if err != nil {
-		return "", websiteUrl
+		return "", err
 	}
 
 	if strings.Contains(websiteUrl, "https") {
@@ -36,16 +36,17 @@ func TakeScreenshotOfWebsite(websiteUrl string, headless bool) (string, string) 
 			Path: playwright.String("../website_screenshots/" + websiteUrl[8:] + ".png"),
 		})
 		if err != nil {
-			return err.Error(), websiteUrl + "|screenshot not taken"
+			return websiteUrl, err
 		}
 	} else {
 		_, err = page.Screenshot(playwright.PageScreenshotOptions{
 			Path: playwright.String("../website_screenshots/" + websiteUrl[7:] + ".png"),
 		})
 		if err != nil {
-			return err.Error(), websiteUrl + "|screenshot not taken"
+			return websiteUrl, err
 		}
 	}
 
-	return websiteUrl, ""
+	page.Close()
+	return websiteUrl, nil
 }

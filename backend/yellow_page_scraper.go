@@ -37,8 +37,6 @@ func SearchForWebsites(city string, industry string, headless bool) ([]string, e
 		return nil, fmt.Errorf("error opening the website: %v", err)
 	}
 
-	fmt.Println("opened yellow page site")
-
 	// accept cookies
 	cookieLocator := page.Locator(".cmpboxbtn.cmpboxbtnyes.cmptxt_btn_yes")
 	err = cookieLocator.WaitFor(playwright.LocatorWaitForOptions{
@@ -137,20 +135,22 @@ func SearchForWebsites(city string, industry string, headless bool) ([]string, e
 
 	page.WaitForTimeout(5000)
 
-	showMoreBusinessesButtonLocator := page.Locator("#mod-LoadMore--button")
-	for i := 0; i < int(amountOfShowMoreBusinessesClicks); i++ {
-		err = showMoreBusinessesButtonLocator.WaitFor(playwright.LocatorWaitForOptions{
-			State: playwright.WaitForSelectorStateVisible,
-		})
-		if err != nil {
-			return nil, fmt.Errorf("error locating the show more businesses button: %v", err)
-		}
+	if amountOfShowMoreBusinessesInteger > 50 {
+		showMoreBusinessesButtonLocator := page.Locator("#mod-LoadMore--button")
+		for i := 0; i < int(amountOfShowMoreBusinessesClicks); i++ {
+			err = showMoreBusinessesButtonLocator.WaitFor(playwright.LocatorWaitForOptions{
+				State: playwright.WaitForSelectorStateVisible,
+			})
+			if err != nil {
+				return nil, fmt.Errorf("error locating the show more businesses button: %v", err)
+			}
 
-    err = showMoreBusinessesButtonLocator.Click()
-		if err != nil {
-			return nil, fmt.Errorf("error clicking the show more businesses button: %v", err)
+			err = showMoreBusinessesButtonLocator.Click()
+			if err != nil {
+				return nil, fmt.Errorf("error clicking the show more businesses button: %v", err)
+			}
+			page.WaitForTimeout(1000)
 		}
-		page.WaitForTimeout(1000)
 	}
 
 	// get website links
@@ -174,6 +174,8 @@ func SearchForWebsites(city string, industry string, headless bool) ([]string, e
 		}
 		websites = append(websites, string(businessWebsiteUrl))
 	}
+
+	page.Close()
 
 	return websites,nil
 }
