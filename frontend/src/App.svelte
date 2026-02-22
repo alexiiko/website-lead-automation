@@ -3,6 +3,10 @@
   import { TakeScreenshotOfWebsite } from "../wailsjs/go/main/App"
   import { ResetScreenshotsDir } from "../wailsjs/go/main/App"
 
+  import data from "./data.json"
+  let availableIndustries = data[1].industries
+  let selectedIndustry = ""
+
   let statusText = ""
   let statusTextScreenshots = ""
   let statusTextUrls = ""
@@ -72,13 +76,18 @@
 </script>
 
 <main>
-  <div id="inputs-container" class="inputs-container">
-    <div id="inputs">
-      <input id="industry-input" placeholder="Unternehmen" bind:value={industry}/>
-      <input id="city-input" placeholder="Stadt" bind:value={city}/>
+    <div id="inputs-container" class="inputs-container">
+      <div id="inputs">
+        <select bind:value={selectedIndustry} required disabled={!searchButtonActive} name="industries" id="industries-select"> 
+        {#each availableIndustries as industry}
+          <option value={industry}>{industry}</option>
+        {/each}
+      </select>
 
-      <button on:click={main} disabled={!searchButtonActive}>Suchen</button>
-      <button disabled={searchButtonActive}>Suche abbrechen</button>
+        <input id="city-input" placeholder="Stadt" bind:value={city}/>
+
+        <button on:click={main} disabled={!searchButtonActive}>Suchen</button>
+        <button disabled={searchButtonActive}>Suche abbrechen</button>
     </div>
 
     <div id="headless-checkbox-container">
@@ -89,6 +98,7 @@
   <p style="white-space: pre-line;">{statusTextUrls}</p>
   <p style="white-space: pre-line;">{statusText}</p>
   <p style="white-space: pre-line;">{statusTextScreenshots}</p>
+
 </main>
 
 <style>
