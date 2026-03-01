@@ -16,19 +16,14 @@
   let headless = false
 
   let amountOfWebsites = 0
-
   let searchButtonActive = true
 
   async function searchForWebsites() {
     if (city != "") {
       try {
-
         websiteUrls = await SearchForWebsites(city, selectedIndustry, !headless)
         amountOfWebsites = websiteUrls.length
-
-
         statusTextUrls = `${amountOfWebsites} Webseiten gefunden.`
-
       } catch (error) {
         statusTextUrls = ""
         statusText = "Fehler beim Suchen der Webseiten: \n" + error.toString()
@@ -45,16 +40,26 @@
       statusText = "Screenshots von Webseiten machen..."
     } catch (error) {
       statusTextScreenshots = ""
-      statusText = `Fehler beim Erstellen eines Screenshots bei dieser Webseite:  ${url} \n` + error.toString()
+      statusText =
+        `Fehler beim Erstellen eines Screenshots bei dieser Webseite:  ${url} \n` +
+        error.toString()
     }
   }
 
-  let screenshotProgress = 0
+  function saveLastSearchedIndustry() {
+
+  }
+
+  function retrieveLastSearchedIndustry() {
+
+  }
+
   async function main() {
     await ResetScreenshotsDir()
     statusText = ""
     statusTextScreenshots = ""
     statusTextUrls = ""
+    let screenshotProgress = 0
 
     statusText = "URLs sammeln..."
     searchButtonActive = false
@@ -62,30 +67,24 @@
 
     statusText = "Screenshots von Webseiten machen..."
     for (let index = 0; index < websiteUrls.length; index++) {
-      const websiteUrl = websiteUrls[index];
-      statusTextScreenshots = `Bei Website: ${websiteUrl} \n` + `${index}/${websiteUrls.length}`
+      const websiteUrl = websiteUrls[index]
+      statusTextScreenshots = `Bei Website: ${websiteUrl} \n${index}/${websiteUrls.length}`
       await takeScreenShotsOfWebsite(websiteUrl)
       screenshotProgress++
     }
+
     statusTextScreenshots = `${screenshotProgress} Screenshots von ${websiteUrls.length} Webseiten gemacht!`
     statusText = ""
-
     searchButtonActive = true
   }
 </script>
 
-<main>
-  <div id="inputs-container" class="inputs-container">
-    <div id="inputs">
-      <!-- Row 1: labels -->
-      <div class="top-labels">
-        <label for="industries-select">Industrie:</label>
-        <label for="city-input">Stadt:</label>
-      </div>
-
-      <!-- Row 2: industry select + city input -->
-      <div class="top-fields">
-        <div id="industry-select-container" class="field industry-field">
+<main class="page">
+  <section class="card">
+    <div class="form">
+      <div class="grid">
+        <div class="field">
+          <label class="field-label" for="industries-select">Industrie:</label>
           <select
             bind:value={selectedIndustry}
             required
@@ -99,296 +98,226 @@
           </select>
         </div>
 
-        <div class="field city-field">
-          <!-- remove placeholder if you want it visually empty like the mockup -->
+        <div class="field">
+          <label class="field-label" for="city-input">Stadt:</label>
           <input
-            disabled={!searchButtonActive}
             id="city-input"
+            disabled={!searchButtonActive}
             bind:value={city}
+            placeholder="Berlin"
           />
         </div>
       </div>
 
-      <!-- Row 3: search button + checkbox on the right -->
-      <div class="middle-row">
-        <button class="search-button" on:click={main} disabled={!searchButtonActive}>
-          <!-- optional icon -->
+      <div class="controls">
+        <button class="btn btn--primary" on:click={main} disabled={!searchButtonActive}>
           <span class="btn-icon" aria-hidden="true">⌕</span>
           <span>Suchen</span>
         </button>
 
-        <label id="show-browser-checkbox" class="checkbox-area">
-          <span class="checkbox-text">Browser<br />anzeigen</span>
+        <button class="btn btn--danger" disabled={searchButtonActive}>
+          <span class="btn-icon" aria-hidden="true">✖</span>
+          <span>Suche abbrechen</span>
+        </button>
+
+        <label class="toggle" title="Browser anzeigen (nicht headless)">
           <input
+            class="toggle__input"
             type="checkbox"
             disabled={!searchButtonActive}
             bind:checked={headless}
           />
-          <span class="checkbox-visual" aria-hidden="true"></span>
+          <span class="toggle__track" aria-hidden="true"></span>
+          <span class="toggle__label">Browser anzeigen</span>
         </label>
       </div>
-
-      <!-- Row 4: full-width cancel button -->
-      <button class="cancel-button" disabled={searchButtonActive}>
-        <!-- optional icon -->
-        <span class="btn-icon" aria-hidden="true">✖</span>
-        <span>Suche abbrechen</span>
-      </button>
     </div>
-  </div>
 
-  <!-- keep these at the bottom -->
-  <p style="white-space: pre-line;">{statusTextUrls}</p>
-  <p style="white-space: pre-line;">{statusText}</p>
-  <p style="white-space: pre-line;">{statusTextScreenshots}</p>
+    <div id="status-texts">
+      <pre>{statusTextUrls}</pre>
+      <pre>{statusText}</pre>
+      <pre>{statusTextScreenshots}</pre>
+    </div>
+  </section>
 </main>
 
 <style>
-/* Layout */
-main {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-/* Keeps the status paragraphs below the UI block */
-#inputs-container {
-  width: 100%;
-}
-
-#inputs {
-  display: grid;
-  grid-template-columns: minmax(240px, 1.1fr) minmax(180px, 0.9fr);
-  grid-template-areas:
-    "labels labels"
-    "industry city"
-    "search checkbox"
-    "cancel cancel";
-  gap: 1rem 1.25rem;
-  align-items: end;
-  max-width: 900px;
-}
-
-/* Row 1 labels */
-.top-labels {
-  grid-area: labels;
-  display: grid;
-  grid-template-columns: minmax(240px, 1.1fr) minmax(180px, 0.9fr);
-  gap: 1.25rem;
-}
-
-.top-labels label {
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-/* Row 2 fields */
-.top-fields {
-  grid-area: industry / industry / city / city; /* occupy row, but internal grid handles columns */
-  display: grid;
-  grid-template-columns: minmax(240px, 1.1fr) minmax(180px, 0.9fr);
-  gap: 1.25rem;
-}
-
-.field {
-  min-width: 0;
-}
-
-.industry-field {
-  grid-column: 1;
-}
-
-.city-field {
-  grid-column: 2;
-}
-
-#industry-select-container,
-.city-field {
-  width: 100%;
-}
-
-#industries-select,
-#city-input {
-  width: 100%;
-  height: 3.3rem;
-  border: 2px solid #2b2b2b;
-  border-radius: 16px;
-  padding: 0 0.9rem;
-  font-size: 1rem;
-  background: white;
-  box-sizing: border-box;
-}
-
-/* Better-looking select arrow (optional) */
-#industries-select {
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  padding-right: 2.8rem;
-  background-image:
-    linear-gradient(45deg, transparent 50%, #000 50%),
-    linear-gradient(135deg, #000 50%, transparent 50%);
-  background-position:
-    calc(100% - 22px) calc(50% - 3px),
-    calc(100% - 12px) calc(50% - 3px);
-  background-size: 10px 10px, 10px 10px;
-  background-repeat: no-repeat;
-}
-
-/* Row 3 */
-.middle-row {
-  grid-area: search / search / checkbox / checkbox;
-  display: grid;
-  grid-template-columns: minmax(240px, 1.1fr) auto;
-  gap: 1.25rem;
-  align-items: center;
-}
-
-.search-button {
-  grid-column: 1;
-}
-
-.checkbox-area {
-  grid-column: 2;
-  display: grid;
-  grid-template-columns: auto 56px;
-  grid-template-rows: auto;
-  align-items: center;
-  column-gap: 0.8rem;
-  justify-self: end;
-  cursor: pointer;
-  user-select: none;
-}
-
-.checkbox-text {
-  font-size: 1rem;
-  line-height: 1.15;
-}
-
-/* Hide native checkbox but keep it accessible */
-.checkbox-area input[type="checkbox"] {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.checkbox-visual {
-  width: 56px;
-  height: 56px;
-  border: 2px solid #2b2b2b;
-  border-radius: 14px;
-  background: white;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: border-box;
-  position: relative;
-}
-
-/* Checkmark */
-.checkbox-area input[type="checkbox"]:checked + .checkbox-visual::after {
-  content: "✓";
-  font-size: 2rem;
-  line-height: 1;
-  font-weight: 700;
-  color: #111;
-  transform: translateY(-1px);
-}
-
-/* Row 4 */
-.cancel-button {
-  grid-area: cancel;
-  width: 100%;
-}
-
-/* Buttons (shared) */
-.search-button,
-.cancel-button {
-  height: 3.5rem;
-  border: 2px solid #2b2b2b;
-  border-radius: 18px;
-  background: white;
-  font-size: 1.05rem;
-  padding: 0 1rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-
-.btn-icon {
-  font-size: 1.2rem;
-  line-height: 1;
-}
-
-.search-button:disabled,
-.cancel-button:disabled,
-#industries-select:disabled,
-#city-input:disabled,
-.checkbox-area input[type="checkbox"]:disabled + .checkbox-visual {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-/* Optional focus styles */
-#industries-select:focus,
-#city-input:focus,
-.search-button:focus-visible,
-.cancel-button:focus-visible,
-.checkbox-area:focus-within .checkbox-visual {
-  outline: 2px solid #666;
-  outline-offset: 2px;
-}
-
-/* Responsive: stack on smaller screens */
-@media (max-width: 700px) {
-  #inputs,
-  .top-labels,
-  .top-fields,
-  .middle-row {
-    grid-template-columns: 1fr;
+  :global(html, body) {
+    height: 100%;
+    margin: 0;
   }
 
-  #inputs {
-    grid-template-areas:
-      "labels"
-      "industry"
-      "city"
-      "search"
-      "checkbox"
-      "cancel";
-  }
-
-  .top-labels {
+  .page {
+    min-height: 100vh;
     display: grid;
-    gap: 0.6rem;
+    place-items: center;
+    padding: 24px;
+    box-sizing: border-box;
   }
 
-  .top-fields {
-    grid-area: auto;
+  .card {
+    width: min(760px, 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 22px;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+  }
+
+  .form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .grid {
     display: grid;
-    gap: 0.75rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
   }
 
-  .industry-field,
-  .city-field {
-    grid-column: auto;
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: flex-start; 
   }
 
-  .middle-row {
-    grid-area: auto;
-    display: grid;
-    gap: 0.75rem;
+  .field-label {
+    text-align: left;
+    font-weight: bold;
+    width: 100%;
+    font-size: 13px;
+    opacity: 0.85;
   }
 
-  .checkbox-area {
-    justify-self: start;
+  select,
+  input {
+    width: 100%;
+    height: 40px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    outline: none;
+    background: white;
+    box-sizing: border-box;
   }
 
-  .checkbox-text br {
-    display: none;
+  select:disabled,
+  input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
-}
+
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: nowrap; 
+  }
+
+  .btn {
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    background: white;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  .btn--primary {
+    border-color: rgba(0, 0, 0, 0.18);
+  }
+
+  .btn--danger {
+    width: auto; 
+  }
+
+  .btn-icon {
+    font-size: 16px;
+    line-height: 1;
+  }
+
+  .toggle {
+    margin-left: auto; 
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    user-select: none;
+    cursor: pointer;
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .toggle__input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .toggle__track {
+    width: 44px;
+    height: 26px;
+    border-radius: 999px;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    position: relative;
+    background: rgba(0, 0, 0, 0.06);
+    display: inline-block;
+    flex: 0 0 auto;
+  }
+
+  .toggle__track::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 4px;
+    transform: translateY(-50%);
+    width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    transition: left 150ms ease;
+  }
+
+  .toggle__input:checked + .toggle__track {
+    background: rgba(46, 204, 113, 0.35);
+    border-color: rgba(46, 204, 113, 0.7);
+  }
+
+  .toggle__input:checked + .toggle__track::after {
+    left: 22px;
+    border-color: rgba(46, 204, 113, 0.7);
+  }
+
+  .toggle__label {
+    font-size: 13px;
+    opacity: 0.9;
+  }
+
+  @media (max-width: 640px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+    .controls {
+      flex-wrap: wrap;
+    }
+    .toggle {
+      margin-left: 0;
+    }
+  }
 </style>
