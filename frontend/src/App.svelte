@@ -7,6 +7,8 @@
   let availableIndustries = data[1].industries
   let selectedIndustry = "Autoreparaturen"
 
+  let lastSearchedIndustry = retrieveLastSearchedIndustry()
+
   let statusText = ""
   let statusTextScreenshots = ""
   let statusTextUrls = ""
@@ -47,15 +49,17 @@
   }
 
   function saveLastSearchedIndustry() {
-
+    data[2].last_searched_industry = selectedIndustry
   }
 
   function retrieveLastSearchedIndustry() {
-
+    return data[2].last_searched_industry
   }
 
   async function main() {
     await ResetScreenshotsDir()
+    saveLastSearchedIndustry()
+    lastSearchedIndustry = retrieveLastSearchedIndustry()
     statusText = ""
     statusTextScreenshots = ""
     statusTextUrls = ""
@@ -96,6 +100,7 @@
               <option value={industry}>{industry}</option>
             {/each}
           </select>
+          <label for="industries-select">Zuletzt gesucht: {lastSearchedIndustry}</label>
         </div>
 
         <div class="field">
