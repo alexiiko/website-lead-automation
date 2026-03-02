@@ -88,7 +88,7 @@
     <div class="form">
       <div class="grid">
         <div class="field">
-          <label class="field-label" for="industries-select">Industrie:</label>
+          <label class="field-label" for="industries-select">🏭 Industrie:</label>
           <select
             bind:value={selectedIndustry}
             required
@@ -100,11 +100,11 @@
               <option value={industry}>{industry}</option>
             {/each}
           </select>
-          <label for="industries-select">Zuletzt gesucht: {lastSearchedIndustry}</label>
+          <label for="industries-select">⏳ Zuletzt gesucht: {lastSearchedIndustry}</label>
         </div>
 
         <div class="field">
-          <label class="field-label" for="city-input">Stadt:</label>
+          <label class="field-label" for="city-input">🏙️ Stadt:</label>
           <input
             id="city-input"
             disabled={!searchButtonActive}
@@ -116,12 +116,12 @@
 
       <div class="controls">
         <button class="btn btn--primary" on:click={main} disabled={!searchButtonActive}>
-          <span class="btn-icon" aria-hidden="true">⌕</span>
+          <span class="btn-icon" aria-hidden="true">🔎</span>
           <span>Suchen</span>
         </button>
 
         <button class="btn btn--danger" disabled={searchButtonActive}>
-          <span class="btn-icon" aria-hidden="true">✖</span>
+          <span class="btn-icon" aria-hidden="true">❌</span>
           <span>Suche abbrechen</span>
         </button>
 
@@ -133,7 +133,7 @@
             bind:checked={headless}
           />
           <span class="toggle__track" aria-hidden="true"></span>
-          <span class="toggle__label">Browser anzeigen</span>
+          <span class="toggle__label">🌐 Browser anzeigen</span>
         </label>
       </div>
     </div>
