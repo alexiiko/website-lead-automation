@@ -280,7 +280,7 @@
     border-radius: 999px;
     border: 1px solid rgba(0, 0, 0, 0.16);
     position: relative;
-    background: rgba(0, 0, 0, 0.06);
+    background: rgba(214, 113, 147, 0.7);
     display: inline-block;
     flex: 0 0 auto;
   }
