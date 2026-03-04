@@ -2,6 +2,7 @@
   import { SearchForWebsites } from "../wailsjs/go/main/App"
   import { TakeScreenshotOfWebsite } from "../wailsjs/go/main/App"
   import { ResetScreenshotsDir } from "../wailsjs/go/main/App"
+  import { CancelCurrentJob } from "../wailsjs/go/main/App"
 
   import data from "./data.json"
   let availableIndustries = data[1].industries
@@ -54,6 +55,17 @@
 
   function retrieveLastSearchedIndustry() {
     return data[2].last_searched_industry
+  }
+
+  function abortSearch() {
+    statusText = ""
+    statusTextScreenshots = ""
+    statusTextUrls = ""
+    websiteUrls = []
+
+    CancelCurrentJob()
+    // also stop the JS loop immediately (recommended)
+    abortMain()  // your runId/flag approach
   }
 
   async function main() {
@@ -120,7 +132,9 @@
           <span>Suchen</span>
         </button>
 
-        <button class="btn btn--danger" disabled={searchButtonActive}>
+        <button class="btn btn--danger" disabled={searchButtonActive} on:click={() => {
+          abortSearch()
+        }}>
           <span class="btn-icon" aria-hidden="true">❌</span>
           <span>Suche abbrechen</span>
         </button>

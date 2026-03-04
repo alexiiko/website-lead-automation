@@ -1,22 +1,21 @@
 package backend
 
 import (
+	"context"
+	"errors"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/playwright-community/playwright-go"
 )
 
-
 func ResetScreenshotsDir() error {
 	const screenshotsDir = "website_screenshots"
-	if err := os.RemoveAll(screenshotsDir); err != nil {
-		return err
-	}
-	return nil
+	return os.RemoveAll(screenshotsDir)
 }
 
 var invalidFileChars = regexp.MustCompile(`[<>:"/\\|?*\x00-\x1F]`)
@@ -45,12 +44,36 @@ func safeFilenameFromURL(raw string) string {
 	return name
 }
 
-func TakeScreenshotOfWebsite(websiteURL string, headless bool) (string, error) {
+func ctxErr(ctx context.Context) error {
+	if ctx == nil {
+		return nil
+	}
+	if err := ctx.Err(); err != nil {
+		// optional: return nicer message
+		if errors.Is(err, context.Canceled) {
+			return context.Canceled
+		}
+		return err
+	}
+	return nil
+}
+
+func TakeScreenshotOfWebsite(ctx context.Context, websiteURL string, headless bool) (string, error) {
+	if err := ctxErr(ctx); err != nil {
+		return "", err
+	}
+
 	pw, err := playwright.Run()
 	if err != nil {
 		return "", err
 	}
+	// allow forced stop on cancel
+	registerForceStop(func() { _ = pw.Stop() })
 	defer pw.Stop()
+
+	if err := ctxErr(ctx); err != nil {
+		return "", err
+	}
 
 	browser, err := pw.Chromium.Launch(playwright.BrowserTypeLaunchOptions{
 		Headless: playwright.Bool(headless),
@@ -58,13 +81,19 @@ func TakeScreenshotOfWebsite(websiteURL string, headless bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	registerForceStop(func() { _ = browser.Close() })
 	defer browser.Close()
 
 	page, err := browser.NewPage()
 	if err != nil {
 		return "", err
 	}
+	registerForceStop(func() { _ = page.Close() })
 	defer page.Close()
+
+	if err := ctxErr(ctx); err != nil {
+		return "", err
+	}
 
 	_, err = page.Goto(websiteURL, playwright.PageGotoOptions{
 		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
@@ -73,9 +102,11 @@ func TakeScreenshotOfWebsite(websiteURL string, headless bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	if err := ctxErr(ctx); err != nil {
+		return "", err
+	}
 
 	outDir := "website_screenshots"
-
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		return "", err
 	}
@@ -89,6 +120,16 @@ func TakeScreenshotOfWebsite(websiteURL string, headless bool) (string, error) {
 	})
 	if err != nil {
 		return "", err
+	}
+	if err := ctxErr(ctx); err != nil {
+		return "", err
+	}
+
+	// tiny grace to allow immediate cancel after screenshot call
+	select {
+	case <-ctx.Done():
+		return "", ctx.Err()
+	case <-time.After(1 * time.Millisecond):
 	}
 
 	return outPath, nil
