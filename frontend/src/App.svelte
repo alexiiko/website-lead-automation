@@ -64,8 +64,7 @@
     websiteUrls = []
 
     CancelCurrentJob()
-    // also stop the JS loop immediately (recommended)
-    abortMain()  // your runId/flag approach
+    abortMain()
   }
 
   async function main() {

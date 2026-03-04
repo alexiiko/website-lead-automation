@@ -139,9 +139,8 @@ func SearchForWebsites(ctx context.Context, city string, industry string, headle
 		return nil, fmt.Errorf("error converting amount text to int: %v", err)
 	}
 
-	clicks := int(math.Ceil(float64(amountInt)/10)) - 5 // 50 already shown
+	clicks := int(math.Ceil(float64(amountInt)/10)) - 5 
 
-	// was: page.WaitForTimeout(5000)
 	if err := sleepCtx(ctx, 5*time.Second); err != nil {
 		return nil, err
 	}
@@ -158,7 +157,6 @@ func SearchForWebsites(ctx context.Context, city string, industry string, headle
 			if err := showMore.Click(); err != nil {
 				return nil, fmt.Errorf("error clicking show more button: %v", err)
 			}
-			// was: page.WaitForTimeout(1000)
 			if err := sleepCtx(ctx, 1*time.Second); err != nil {
 				return nil, err
 			}
@@ -173,7 +171,6 @@ func SearchForWebsites(ctx context.Context, city string, industry string, headle
 
 	for i := 0; i < count; i++ {
 		if err := ctxErr(ctx); err != nil {
-			// make "cancel" look clean
 			if errors.Is(err, context.Canceled) {
 				return websites, context.Canceled
 			}

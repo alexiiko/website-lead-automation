@@ -49,7 +49,6 @@ func ctxErr(ctx context.Context) error {
 		return nil
 	}
 	if err := ctx.Err(); err != nil {
-		// optional: return nicer message
 		if errors.Is(err, context.Canceled) {
 			return context.Canceled
 		}
@@ -67,7 +66,6 @@ func TakeScreenshotOfWebsite(ctx context.Context, websiteURL string, headless bo
 	if err != nil {
 		return "", err
 	}
-	// allow forced stop on cancel
 	registerForceStop(func() { _ = pw.Stop() })
 	defer pw.Stop()
 
@@ -125,7 +123,6 @@ func TakeScreenshotOfWebsite(ctx context.Context, websiteURL string, headless bo
 		return "", err
 	}
 
-	// tiny grace to allow immediate cancel after screenshot call
 	select {
 	case <-ctx.Done():
 		return "", ctx.Err()
