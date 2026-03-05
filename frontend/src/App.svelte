@@ -1,4 +1,6 @@
 <script>
+  import Tabs from "./Tabs.svelte"
+
   import { SearchForWebsites } from "../wailsjs/go/main/App"
   import { TakeScreenshotOfWebsite } from "../wailsjs/go/main/App"
   import { ResetScreenshotsDir } from "../wailsjs/go/main/App"
@@ -58,6 +60,7 @@
   }
 
   function abortSearch() {
+    data[3].search_aborted = true
     statusText = ""
     statusTextScreenshots = ""
     statusTextUrls = ""
@@ -94,7 +97,11 @@
   }
 </script>
 
-<main class="page">
+<Tabs tabs={[
+  {id: "website_search", label: "Webseiten suchen"},
+  {id: "analyse_screenshots", label: "Bilder analysieren"}
+]}>
+<div slot="website_search">
   <section class="card">
     <div class="form">
       <div class="grid">
@@ -157,7 +164,12 @@
       <pre>{statusTextScreenshots}</pre>
     </div>
   </section>
-</main>
+  </div>
+
+  <div slot="analyse_screenshots">
+    <h1>Analyse Screenshots</h1>
+  </div>
+</Tabs>
 
 <style>
   :global(html, body) {

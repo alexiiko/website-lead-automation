@@ -14,5 +14,8 @@
   }, 
   {
     "last_searched_industry": ""
+  },
+  {
+    "search_aborted": false
   }
 ]
