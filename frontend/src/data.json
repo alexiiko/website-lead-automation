@@ -1,8 +1,5 @@
 [
   {
-    "searched_for_websites": false
-  },
-  {
     "industries": [
       "Autoreparaturen",
       "Baufirmen",
@@ -11,11 +8,5 @@
       "Kfz-Reparaturen",
       "Malerbetriebe"
     ]
-  }, 
-  {
-    "last_searched_industry": ""
-  },
-  {
-    "search_aborted": false
   }
 ]

@@ -1,4 +1,5 @@
 <script>
+  import { onMount } from "svelte"
   import Tabs from "./Tabs.svelte"
 
   import { SearchForWebsites } from "../wailsjs/go/main/App"
@@ -7,10 +8,19 @@
   import { CancelCurrentJob } from "../wailsjs/go/main/App"
 
   import data from "./data.json"
-  let availableIndustries = data[1].industries
-  let selectedIndustry = "Autoreparaturen"
+  let availableIndustries = data[0].industries
 
-  let lastSearchedIndustry = retrieveLastSearchedIndustry()
+  const LS = {
+    lastIndustry: "lsa:lastSearchedIndustry",
+    searchDone: "lsa:searchDone",
+    searchAborted: "lsa:searchAborted",
+    city: "lsa:city",
+    industry: "lsa:selectedIndustry",
+    headless: "lsa:headless"
+  }
+
+  let selectedIndustry = "Autoreparaturen"
+  let lastSearchedIndustry = ""
 
   let statusText = ""
   let statusTextScreenshots = ""
@@ -22,9 +32,69 @@
 
   let amountOfWebsites = 0
   let searchButtonActive = true
+  let screenshotProgress = 0
+
+  let searchDone = false
+  let searchAborted = false
+
+  function lsGet(key, fallback = "") {
+    try {
+      const v = localStorage.getItem(key)
+      return v === null ? fallback : v
+    } catch {
+      return fallback
+    }
+  }
+
+  function lsGetBool(key, fallback = false) {
+    const v = lsGet(key, "")
+    if (v === "") return fallback
+    return v === "true"
+  }
+
+  function lsSet(key, value) {
+    try {
+      localStorage.setItem(key, String(value))
+    } catch {
+    }
+  }
+
+  function loadPersisted() {
+    selectedIndustry = lsGet(LS.industry, selectedIndustry)
+    city = lsGet(LS.city, city)
+    headless = lsGetBool(LS.headless, headless)
+
+    lastSearchedIndustry = lsGet(LS.lastIndustry, "")
+    searchDone = lsGetBool(LS.searchDone, false)
+    searchAborted = lsGetBool(LS.searchAborted, false)
+  }
+
+  function persistInputs() {
+    lsSet(LS.industry, selectedIndustry)
+    lsSet(LS.city, city)
+    lsSet(LS.headless, headless)
+  }
+
+  function setLastSearchedIndustry(industry) {
+    lsSet(LS.lastIndustry, industry)
+  }
+
+  function setSearchDone(v) {
+    lsSet(LS.searchDone, v)
+  }
+
+  function setSearchAborted(v) {
+    lsSet(LS.searchAborted, v)
+  }
+
+  onMount(() => {
+    loadPersisted()
+  })
+
+  $: persistInputs()
 
   async function searchForWebsites() {
-    if (city != "") {
+    if (city !== "") {
       try {
         websiteUrls = await SearchForWebsites(city, selectedIndustry, !headless)
         amountOfWebsites = websiteUrls.length
@@ -51,119 +121,141 @@
     }
   }
 
-  function saveLastSearchedIndustry() {
-    data[2].last_searched_industry = selectedIndustry
-  }
-
-  function retrieveLastSearchedIndustry() {
-    return data[2].last_searched_industry
-  }
-
   function abortSearch() {
-    data[3].search_aborted = true
+    setSearchAborted(true)
+    setSearchDone(false)
+
+    statusText = ""
+    statusTextUrls = ""
+    statusTextScreenshots = ""
+    websiteUrls = []
+    amountOfWebsites = 0
+    screenshotProgress = 0
+
+    CancelCurrentJob()
+  }
+
+  async function main() {
+    // new run
+    setSearchAborted(false)
+    setSearchDone(false)
+
+    screenshotProgress = 0
+    await ResetScreenshotsDir()
+
+    setLastSearchedIndustry(selectedIndustry)
+
     statusText = ""
     statusTextScreenshots = ""
     statusTextUrls = ""
     websiteUrls = []
-
-    CancelCurrentJob()
-    abortMain()
-  }
-
-  async function main() {
-    await ResetScreenshotsDir()
-    saveLastSearchedIndustry()
-    lastSearchedIndustry = retrieveLastSearchedIndustry()
-    statusText = ""
-    statusTextScreenshots = ""
-    statusTextUrls = ""
-    let screenshotProgress = 0
+    amountOfWebsites = 0
 
     statusText = "URLs sammeln..."
     searchButtonActive = false
     await searchForWebsites()
 
+    if (searchAborted) {
+      statusText = ""
+      searchButtonActive = true
+      return
+    }
+
     statusText = "Screenshots von Webseiten machen..."
     for (let index = 0; index < websiteUrls.length; index++) {
+      if (searchAborted) break
+
       const websiteUrl = websiteUrls[index]
-      statusTextScreenshots = `Bei Website: ${websiteUrl} \n${index}/${websiteUrls.length}`
+      statusTextScreenshots = `Bei Website: ${websiteUrl} \n${index + 1}/${websiteUrls.length}`
       await takeScreenShotsOfWebsite(websiteUrl)
       screenshotProgress++
     }
 
-    statusTextScreenshots = `${screenshotProgress} Screenshots von ${websiteUrls.length} Webseiten gemacht!`
+    if (!searchAborted) {
+      statusTextScreenshots = `${screenshotProgress} Screenshots von ${websiteUrls.length} Webseiten gemacht!`
+      setSearchDone(true)
+    } else {
+      statusTextScreenshots = "Suche abgebrochen."
+      setSearchDone(false)
+    }
+
     statusText = ""
     searchButtonActive = true
   }
 </script>
 
-<Tabs tabs={[
-  {id: "website_search", label: "Webseiten suchen"},
-  {id: "analyse_screenshots", label: "Bilder analysieren"}
-]}>
-<div slot="website_search">
-  <section class="card">
-    <div class="form">
-      <div class="grid">
-        <div class="field">
-          <label class="field-label" for="industries-select">🏭 Industrie:</label>
-          <select
-            bind:value={selectedIndustry}
-            required
-            disabled={!searchButtonActive}
-            name="industries"
-            id="industries-select"
+<Tabs
+  tabs={[
+    { id: "website_search", label: "Webseiten suchen" },
+    { id: "analyse_screenshots", label: "Bilder analysieren" }
+  ]}
+  canOpenAnalyse={searchDone}
+>
+  <div class="page" slot="website_search">
+    <section class="card">
+      <div class="form">
+        <div class="grid">
+          <div class="field">
+            <label class="field-label" for="industries-select">🏭 Industrie:</label>
+            <select
+              bind:value={selectedIndustry}
+              required
+              disabled={!searchButtonActive}
+              name="industries"
+              id="industries-select"
+            >
+              {#each availableIndustries as industry}
+                <option value={industry}>{industry}</option>
+              {/each}
+            </select>
+            <label for="industries-select">⏳ Zuletzt gesucht: {lastSearchedIndustry}</label>
+          </div>
+
+          <div class="field">
+            <label class="field-label" for="city-input">🏙️ Stadt:</label>
+            <input
+              id="city-input"
+              disabled={!searchButtonActive}
+              bind:value={city}
+              placeholder="Berlin"
+            />
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="btn btn--primary" on:click={main} disabled={!searchButtonActive}>
+            <span class="btn-icon" aria-hidden="true">🔎</span>
+            <span>Suchen</span>
+          </button>
+
+          <button
+            class="btn btn--danger"
+            disabled={searchButtonActive}
+            on:click={abortSearch}
           >
-            {#each availableIndustries as industry}
-              <option value={industry}>{industry}</option>
-            {/each}
-          </select>
-          <label for="industries-select">⏳ Zuletzt gesucht: {lastSearchedIndustry}</label>
-        </div>
+            <span class="btn-icon" aria-hidden="true">❌</span>
+            <span>Suche abbrechen</span>
+          </button>
 
-        <div class="field">
-          <label class="field-label" for="city-input">🏙️ Stadt:</label>
-          <input
-            id="city-input"
-            disabled={!searchButtonActive}
-            bind:value={city}
-            placeholder="Berlin"
-          />
+          <label class="toggle" title="Browser anzeigen (nicht headless)">
+            <input
+              class="toggle__input"
+              type="checkbox"
+              disabled={!searchButtonActive}
+              bind:checked={headless}
+            />
+            <span class="toggle__track" aria-hidden="true"></span>
+            <span class="toggle__label">🌐 Browser anzeigen</span>
+          </label>
         </div>
       </div>
 
-      <div class="controls">
-        <button class="btn btn--primary" on:click={main} disabled={!searchButtonActive}>
-          <span class="btn-icon" aria-hidden="true">🔎</span>
-          <span>Suchen</span>
-        </button>
-
-        <button class="btn btn--danger" disabled={searchButtonActive} on:click={() => {
-          abortSearch()
-        }}>
-          <span class="btn-icon" aria-hidden="true">❌</span>
-          <span>Suche abbrechen</span>
-        </button>
-
-        <label class="toggle" title="Browser anzeigen (nicht headless)">
-          <input
-            class="toggle__input"
-            type="checkbox"
-            disabled={!searchButtonActive}
-            bind:checked={headless}
-          />
-          <span class="toggle__track" aria-hidden="true"></span>
-          <span class="toggle__label">🌐 Browser anzeigen</span>
-        </label>
+      <div id="status-texts">
+        <pre>{statusTextUrls}</pre>
+        <pre>{statusText}</pre>
+        <pre>{statusTextScreenshots}</pre>
       </div>
-    </div>
-
-    <div id="status-texts">
-      <pre>{statusTextUrls}</pre>
-      <pre>{statusText}</pre>
-      <pre>{statusTextScreenshots}</pre>
-    </div>
-  </section>
+    </section>
   </div>
 
   <div slot="analyse_screenshots">
@@ -178,10 +270,9 @@
   }
 
   .page {
-    min-height: 100vh;
+    min-height: 83vh;
     display: grid;
     place-items: center;
-    padding: 24px;
     box-sizing: border-box;
   }
 
@@ -213,7 +304,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    align-items: flex-start; 
+    align-items: flex-start;
   }
 
   .field-label {
@@ -246,7 +337,7 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    flex-wrap: nowrap; 
+    flex-wrap: nowrap;
   }
 
   .btn {
@@ -273,17 +364,8 @@
     border-color: rgba(0, 0, 0, 0.18);
   }
 
-  .btn--danger {
-    width: auto; 
-  }
-
-  .btn-icon {
-    font-size: 16px;
-    line-height: 1;
-  }
-
   .toggle {
-    margin-left: auto; 
+    margin-left: auto;
     display: inline-flex;
     align-items: center;
     gap: 10px;

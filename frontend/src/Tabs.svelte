@@ -1,25 +1,43 @@
 <script>
   export let tabs = [
-    {id: "website_search", label: "Webseiten suchen"},
-    {id: "analyse_screenshots", label: "Bilder analysieren"}
+    { id: "website_search", label: "Webseiten suchen" },
+    { id: "analyse_screenshots", label: "Bilder analysieren" }
   ]
 
+  // allow switching to analyse tab only when true
+  export let canOpenAnalyse = false
+
   let active = tabs[0].id
+
+  function isDisabled(tab) {
+    return tab.id === "analyse_screenshots" && !canOpenAnalyse
+  }
+
+  function activate(tab) {
+    if (!isDisabled(tab)) active = tab.id
+  }
+
+  // If analyse becomes disabled while active, jump back
+  $: if (active === "analyse_screenshots" && !canOpenAnalyse) {
+    active = tabs[0].id
+  }
 </script>
 
 <nav class="tabbar" role="tablist" aria-label="Tabs">
-    {#each tabs as tab}
-      <button
-        type="button"
-        role="tab"
-        aria-selected={active === tab.id}
-        class="tab"
-        class:active={active === tab.id}
-        on:click={() => (active = tab.id)}
-      >
-        {tab.label}
-      </button>
-    {/each}
+  {#each tabs as tab}
+    <button
+      type="button"
+      role="tab"
+      aria-selected={active === tab.id}
+      aria-disabled={isDisabled(tab)}
+      disabled={isDisabled(tab)}
+      class="tab"
+      class:active={active === tab.id}
+      on:click={() => activate(tab)}
+    >
+      {tab.label}
+    </button>
+  {/each}
 </nav>
 
 <section class="tabcontent">
@@ -32,67 +50,93 @@
 
 <style>
   .tabbar {
-    width: min(900px, calc(100% - 32px));
-    margin: 18px auto 0 auto; /* centered, top */
-    display: grid;
-    grid-auto-flow: column;
-    grid-auto-columns: 1fr;
+    width: min(760px, 100%);
+    margin: 18px auto 0 auto;
+    display: flex;
+    gap: 10px;
+    padding: 10px;
 
-    background: #fff;
-    border: 1px solid #1f1f1f;        /* thick outline like the image */
-    border-radius: 999px;               /* pill shape */
-    overflow: hidden;                   /* keep buttons clipped to pill */
-    box-shadow: 1px 1px lightgrey;
+    border-radius: 14px;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
   }
 
-  /* Tab buttons */
   .tab {
-    height: 48;                       /* big like the screenshot */
-    padding: 0 28px;
-    font-size: 22;                    /* adjust to taste */
-    font-weight: 500;
-    letter-spacing: 0.2px;
+    flex: 1 1 0;
+    height: 42px;
+    padding: 0 14px;
 
-    border: 0;
-    background: transparent;
+    border-radius: 10px;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    background: white;
+
     cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-    display: grid;
-    place-items: center;
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
     user-select: none;
+
+    transition:
+      background 150ms ease,
+      border-color 150ms ease,
+      transform 120ms ease,
+      box-shadow 150ms ease;
   }
 
-  /* Divider between tabs */
-  .tab + .tab {
-    border-left: 10px solid #1f1f1f;
+  .tab:hover {
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
   }
 
-  /* Active tab styling */
-  .tab.active {
+  .tab:active {
+    transform: translateY(0px);
+    box-shadow: none;
+  }
+
+  .tab:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.25);
+  }
+
+  .tab.active,
+  .tab[aria-selected="true"] {
+    border-color: black;
     background-color: lightgrey;
   }
 
-  /* Content area */
   .tabcontent {
-    flex: 1;
-    padding: 24px;
+    padding: 24px 0 0 0;
     display: flex;
     justify-content: center;
+    box-sizing: border-box;
   }
 
-  /* Make it behave on smaller screens */
-  @media (max-width: 700px) {
-    .tab {
-      height: 70px;
-      font-size: 22px;
-      padding: 0 16px;
-    }
+  @media (max-width: 640px) {
     .tabbar {
-      border-width: 6px;
-      border-bottom-width: 8px;
+      width: min(900px, calc(100% - 32px));
+      margin-top: 12px;
+      padding: 8px;
+      gap: 8px;
     }
-    .tab + .tab {
-      border-left-width: 6px;
+
+    .tab {
+      height: 44px;
+      padding: 0 10px;
+      font-size: 13px;
     }
+  }
+
+  .tab:disabled,
+  .tab[aria-disabled="true"] {
+    opacity: 0.55;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
   }
 </style>
