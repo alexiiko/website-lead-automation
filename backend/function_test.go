@@ -2,6 +2,7 @@ package backend
 
 import "testing"
 
+/*
 func TestScrape(t *testing.T) {
 	result, err := SearchForWebsites("Berlin", "Autoreparaturen", true)
 	if err != nil {
@@ -16,6 +17,13 @@ func TestWebsitescreenshot(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
+	t.Log(result)
+}
+*/
+
+func TestExcel(t *testing.T) {
+	result := WriteBusinessUrlToExcelDatabase("www.malergola.de")
 
 	t.Log(result)
 }
