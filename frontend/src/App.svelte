@@ -15,6 +15,7 @@
 
   const LS = {
     lastIndustry: "lsa:lastSearchedIndustry",
+    lastCity: "lsa:lastSearchedCity",
     searchDone: "lsa:searchDone",
     searchAborted: "lsa:searchAborted",
     city: "lsa:city",
@@ -25,12 +26,14 @@
   let selectedIndustry = "Autoreparaturen";
   let lastSearchedIndustry = "";
 
+  let city = "Merseburg";
+  let lastSearchedCity = "";
+
   let statusText = "";
   let statusTextScreenshots = "";
   let statusTextUrls = "";
   let websiteUrls = [];
 
-  let city = "Merseburg";
   let headless = false;
 
   let amountOfWebsites = 0;
@@ -73,6 +76,7 @@
     headless = lsGetBool(LS.headless, headless);
 
     lastSearchedIndustry = lsGet(LS.lastIndustry, "");
+    lastSearchedCity = lsGet(LS.lastCity, "");
     setSearchDone(lsGetBool(LS.searchDone, false));
     setSearchAborted(lsGetBool(LS.searchAborted, false));
   }
@@ -86,6 +90,11 @@
   function setLastSearchedIndustry(industry) {
     lastSearchedIndustry = industry;
     lsSet(LS.lastIndustry, industry);
+  }
+
+  function setLastSearchedCity(cityValue) {
+    lastSearchedCity = cityValue;
+    lsSet(LS.lastCity, cityValue);
   }
 
   function setSearchDone(v) {
@@ -131,11 +140,13 @@
     try {
       await TakeScreenshotOfWebsite(url, !headless);
       statusText = "Screenshots von Webseiten machen...";
+      return true;
     } catch (error) {
       statusTextScreenshots = "";
       statusText =
         `Fehler beim Erstellen eines Screenshots bei dieser Webseite:  ${url} \n` +
         error.toString();
+      return false;
     }
   }
 
@@ -162,6 +173,7 @@
     await ResetScreenshotsDir();
 
     setLastSearchedIndustry(selectedIndustry);
+    setLastSearchedCity(city);
 
     statusText = "";
     statusTextScreenshots = "";
@@ -185,8 +197,10 @@
 
       const websiteUrl = websiteUrls[index];
       statusTextScreenshots = `Bei Website: ${websiteUrl} \n${index + 1}/${websiteUrls.length}`;
-      await takeScreenShotsOfWebsite(websiteUrl);
-      screenshotProgress++;
+      let success = await takeScreenShotsOfWebsite(websiteUrl);
+      if (success) {
+        screenshotProgress++;
+      }
     }
 
     if (!searchAborted) {
@@ -310,6 +324,9 @@
               bind:value={city}
               placeholder="Berlin"
             />
+            <label for="city-input"
+              >⏳ Zuletzt gesucht: {lastSearchedCity}</label
+            >
           </div>
         </div>
 
