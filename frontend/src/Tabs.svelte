@@ -1,25 +1,25 @@
 <script>
   export let tabs = [
     { id: "website_search", label: "Webseiten suchen" },
-    { id: "analyse_screenshots", label: "Bilder analysieren" }
-  ]
+    { id: "analyse_screenshots", label: "Bilder analysieren" },
+  ];
 
   // allow switching to analyse tab only when true
-  export let canOpenAnalyse = false
+  export let canOpenAnalyse = false;
 
-  let active = tabs[0].id
+  let active = tabs[0].id;
 
-  function isDisabled(tab) {
-    return tab.id === "analyse_screenshots" && !canOpenAnalyse
-  }
+  $: isDisabled = (tab) => {
+    return tab.id === "analyse_screenshots" && !canOpenAnalyse;
+  };
 
   function activate(tab) {
-    if (!isDisabled(tab)) active = tab.id
+    if (!isDisabled(tab)) active = tab.id;
   }
 
   // If analyse becomes disabled while active, jump back
   $: if (active === "analyse_screenshots" && !canOpenAnalyse) {
-    active = tabs[0].id
+    active = tabs[0].id;
   }
 </script>
 

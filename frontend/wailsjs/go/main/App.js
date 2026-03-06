@@ -6,6 +6,14 @@ export function CancelCurrentJob() {
   return window['go']['main']['App']['CancelCurrentJob']();
 }
 
+export function GetScreenshotBase64(arg1) {
+  return window['go']['main']['App']['GetScreenshotBase64'](arg1);
+}
+
+export function GetScreenshotFilenames() {
+  return window['go']['main']['App']['GetScreenshotFilenames']();
+}
+
 export function ResetScreenshotsDir() {
   return window['go']['main']['App']['ResetScreenshotsDir']();
 }
@@ -16,4 +24,8 @@ export function SearchForWebsites(arg1, arg2, arg3) {
 
 export function TakeScreenshotOfWebsite(arg1, arg2) {
   return window['go']['main']['App']['TakeScreenshotOfWebsite'](arg1, arg2);
+}
+
+export function WriteBusinessUrlToExcelDatabase(arg1) {
+  return window['go']['main']['App']['WriteBusinessUrlToExcelDatabase'](arg1);
 }

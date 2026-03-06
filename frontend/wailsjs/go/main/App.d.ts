@@ -3,8 +3,14 @@
 
 export function CancelCurrentJob():Promise<void>;
 
+export function GetScreenshotBase64(arg1:string):Promise<string>;
+
+export function GetScreenshotFilenames():Promise<Array<string>>;
+
 export function ResetScreenshotsDir():Promise<void>;
 
 export function SearchForWebsites(arg1:string,arg2:string,arg3:boolean):Promise<Array<string>>;
 
 export function TakeScreenshotOfWebsite(arg1:string,arg2:boolean):Promise<string>;
+
+export function WriteBusinessUrlToExcelDatabase(arg1:string):Promise<void>;

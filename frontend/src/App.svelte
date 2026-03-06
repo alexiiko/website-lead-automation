@@ -1,14 +1,17 @@
 <script>
-  import { onMount } from "svelte"
-  import Tabs from "./Tabs.svelte"
+  import { onMount } from "svelte";
+  import Tabs from "./Tabs.svelte";
 
-  import { SearchForWebsites } from "../wailsjs/go/main/App"
-  import { TakeScreenshotOfWebsite } from "../wailsjs/go/main/App"
-  import { ResetScreenshotsDir } from "../wailsjs/go/main/App"
-  import { CancelCurrentJob } from "../wailsjs/go/main/App"
+  import { SearchForWebsites } from "../wailsjs/go/main/App";
+  import { TakeScreenshotOfWebsite } from "../wailsjs/go/main/App";
+  import { ResetScreenshotsDir } from "../wailsjs/go/main/App";
+  import { CancelCurrentJob } from "../wailsjs/go/main/App";
+  import { GetScreenshotFilenames } from "../wailsjs/go/main/App";
+  import { GetScreenshotBase64 } from "../wailsjs/go/main/App";
+  import { WriteBusinessUrlToExcelDatabase } from "../wailsjs/go/main/App";
 
-  import data from "./data.json"
-  let availableIndustries = data[0].industries
+  import data from "./data.json";
+  let availableIndustries = data[0].industries;
 
   const LS = {
     lastIndustry: "lsa:lastSearchedIndustry",
@@ -16,178 +19,247 @@
     searchAborted: "lsa:searchAborted",
     city: "lsa:city",
     industry: "lsa:selectedIndustry",
-    headless: "lsa:headless"
-  }
+    headless: "lsa:headless",
+  };
 
-  let selectedIndustry = "Autoreparaturen"
-  let lastSearchedIndustry = ""
+  let selectedIndustry = "Autoreparaturen";
+  let lastSearchedIndustry = "";
 
-  let statusText = ""
-  let statusTextScreenshots = ""
-  let statusTextUrls = ""
-  let websiteUrls = []
+  let statusText = "";
+  let statusTextScreenshots = "";
+  let statusTextUrls = "";
+  let websiteUrls = [];
 
-  let city = "Merseburg"
-  let headless = false
+  let city = "Merseburg";
+  let headless = false;
 
-  let amountOfWebsites = 0
-  let searchButtonActive = true
-  let screenshotProgress = 0
+  let amountOfWebsites = 0;
+  let searchButtonActive = true;
+  let screenshotProgress = 0;
 
-  let searchDone = false
-  let searchAborted = false
+  let searchDone = false;
+  let searchAborted = false;
+
+  let screenshotFiles = [];
+  let currentScreenshotIndex = 0;
+  let currentScreenshotBase64 = "";
 
   function lsGet(key, fallback = "") {
     try {
-      const v = localStorage.getItem(key)
-      return v === null ? fallback : v
+      const v = localStorage.getItem(key);
+      return v === null ? fallback : v;
     } catch {
-      return fallback
+      return fallback;
     }
   }
 
   function lsGetBool(key, fallback = false) {
-    const v = lsGet(key, "")
-    if (v === "") return fallback
-    return v === "true"
+    const v = lsGet(key, "");
+    if (v === "") return fallback;
+    return v === "true";
   }
 
   function lsSet(key, value) {
     try {
-      localStorage.setItem(key, String(value))
-    } catch {
-    }
+      localStorage.setItem(key, String(value));
+    } catch {}
   }
 
   function loadPersisted() {
-    selectedIndustry = lsGet(LS.industry, selectedIndustry)
-    city = lsGet(LS.city, city)
-    headless = lsGetBool(LS.headless, headless)
+    selectedIndustry = lsGet(LS.industry, selectedIndustry);
+    city = lsGet(LS.city, city);
+    headless = lsGetBool(LS.headless, headless);
 
-    lastSearchedIndustry = lsGet(LS.lastIndustry, "")
-    searchDone = lsGetBool(LS.searchDone, false)
-    searchAborted = lsGetBool(LS.searchAborted, false)
+    lastSearchedIndustry = lsGet(LS.lastIndustry, "");
+    setSearchDone(lsGetBool(LS.searchDone, false));
+    setSearchAborted(lsGetBool(LS.searchAborted, false));
   }
 
   function persistInputs() {
-    lsSet(LS.industry, selectedIndustry)
-    lsSet(LS.city, city)
-    lsSet(LS.headless, headless)
+    lsSet(LS.industry, selectedIndustry);
+    lsSet(LS.city, city);
+    lsSet(LS.headless, headless);
   }
 
   function setLastSearchedIndustry(industry) {
-    lsSet(LS.lastIndustry, industry)
+    lastSearchedIndustry = industry;
+    lsSet(LS.lastIndustry, industry);
   }
 
   function setSearchDone(v) {
-    lsSet(LS.searchDone, v)
+    searchDone = v;
+    lsSet(LS.searchDone, v);
   }
 
   function setSearchAborted(v) {
-    lsSet(LS.searchAborted, v)
+    searchAborted = v;
+    lsSet(LS.searchAborted, v);
   }
 
   onMount(() => {
-    loadPersisted()
-  })
+    loadPersisted();
+    if (searchDone) {
+      loadScreenshots();
+    }
+  });
 
-  $: persistInputs()
+  $: persistInputs();
 
   async function searchForWebsites() {
     if (city !== "") {
       try {
-        websiteUrls = await SearchForWebsites(city, selectedIndustry, !headless)
-        amountOfWebsites = websiteUrls.length
-        statusTextUrls = `${amountOfWebsites} Webseiten gefunden.`
+        websiteUrls = await SearchForWebsites(
+          city,
+          selectedIndustry,
+          !headless,
+        );
+        amountOfWebsites = websiteUrls.length;
+        statusTextUrls = `${amountOfWebsites} Webseiten gefunden.`;
       } catch (error) {
-        statusTextUrls = ""
-        statusText = "Fehler beim Suchen der Webseiten: \n" + error.toString()
+        statusTextUrls = "";
+        statusText = "Fehler beim Suchen der Webseiten: \n" + error.toString();
       }
     } else {
-      statusTextUrls = ""
-      statusText = "Stadt und Industrie müssen ausgefüllt sein!"
+      statusTextUrls = "";
+      statusText = "Stadt und Industrie müssen ausgefüllt sein!";
     }
   }
 
   async function takeScreenShotsOfWebsite(url) {
     try {
-      await TakeScreenshotOfWebsite(url, !headless)
-      statusText = "Screenshots von Webseiten machen..."
+      await TakeScreenshotOfWebsite(url, !headless);
+      statusText = "Screenshots von Webseiten machen...";
     } catch (error) {
-      statusTextScreenshots = ""
+      statusTextScreenshots = "";
       statusText =
         `Fehler beim Erstellen eines Screenshots bei dieser Webseite:  ${url} \n` +
-        error.toString()
+        error.toString();
     }
   }
 
   function abortSearch() {
-    setSearchAborted(true)
-    setSearchDone(false)
+    setSearchAborted(true);
+    setSearchDone(false);
 
-    statusText = ""
-    statusTextUrls = ""
-    statusTextScreenshots = ""
-    websiteUrls = []
-    amountOfWebsites = 0
-    screenshotProgress = 0
+    statusText = "";
+    statusTextUrls = "";
+    statusTextScreenshots = "";
+    websiteUrls = [];
+    amountOfWebsites = 0;
+    screenshotProgress = 0;
 
-    CancelCurrentJob()
+    CancelCurrentJob();
   }
 
   async function main() {
     // new run
-    setSearchAborted(false)
-    setSearchDone(false)
+    setSearchAborted(false);
+    setSearchDone(false);
 
-    screenshotProgress = 0
-    await ResetScreenshotsDir()
+    screenshotProgress = 0;
+    await ResetScreenshotsDir();
 
-    setLastSearchedIndustry(selectedIndustry)
+    setLastSearchedIndustry(selectedIndustry);
 
-    statusText = ""
-    statusTextScreenshots = ""
-    statusTextUrls = ""
-    websiteUrls = []
-    amountOfWebsites = 0
+    statusText = "";
+    statusTextScreenshots = "";
+    statusTextUrls = "";
+    websiteUrls = [];
+    amountOfWebsites = 0;
 
-    statusText = "URLs sammeln..."
-    searchButtonActive = false
-    await searchForWebsites()
+    statusText = "URLs sammeln...";
+    searchButtonActive = false;
+    await searchForWebsites();
 
     if (searchAborted) {
-      statusText = ""
-      searchButtonActive = true
-      return
+      statusText = "";
+      searchButtonActive = true;
+      return;
     }
 
-    statusText = "Screenshots von Webseiten machen..."
+    statusText = "Screenshots von Webseiten machen...";
     for (let index = 0; index < websiteUrls.length; index++) {
-      if (searchAborted) break
+      if (searchAborted) break;
 
-      const websiteUrl = websiteUrls[index]
-      statusTextScreenshots = `Bei Website: ${websiteUrl} \n${index + 1}/${websiteUrls.length}`
-      await takeScreenShotsOfWebsite(websiteUrl)
-      screenshotProgress++
+      const websiteUrl = websiteUrls[index];
+      statusTextScreenshots = `Bei Website: ${websiteUrl} \n${index + 1}/${websiteUrls.length}`;
+      await takeScreenShotsOfWebsite(websiteUrl);
+      screenshotProgress++;
     }
 
     if (!searchAborted) {
-      statusTextScreenshots = `${screenshotProgress} Screenshots von ${websiteUrls.length} Webseiten gemacht!`
-      setSearchDone(true)
+      statusTextScreenshots = `${screenshotProgress} Screenshots von ${websiteUrls.length} Webseiten gemacht!`;
+      setSearchDone(true);
+      loadScreenshots();
     } else {
-      statusTextScreenshots = "Suche abgebrochen."
-      setSearchDone(false)
+      statusTextScreenshots = "Suche abgebrochen.";
+      setSearchDone(false);
     }
 
-    statusText = ""
-    searchButtonActive = true
+    statusText = "";
+    searchButtonActive = true;
+  }
+
+  async function loadScreenshots() {
+    try {
+      screenshotFiles = await GetScreenshotFilenames();
+      if (screenshotFiles.length > 0) {
+        currentScreenshotIndex = 0;
+        await updateScreenshotDisplay();
+      }
+    } catch (error) {
+      console.error("Error loading screenshots:", error);
+    }
+  }
+
+  async function updateScreenshotDisplay() {
+    if (
+      screenshotFiles.length > 0 &&
+      currentScreenshotIndex >= 0 &&
+      currentScreenshotIndex < screenshotFiles.length
+    ) {
+      try {
+        currentScreenshotBase64 = await GetScreenshotBase64(
+          screenshotFiles[currentScreenshotIndex],
+        );
+      } catch (error) {
+        console.error("Error loading screenshot base64:", error);
+      }
+    }
+  }
+
+  function nextScreenshot() {
+    if (currentScreenshotIndex < screenshotFiles.length - 1) {
+      currentScreenshotIndex++;
+      updateScreenshotDisplay();
+    }
+  }
+
+  function prevScreenshot() {
+    if (currentScreenshotIndex > 0) {
+      currentScreenshotIndex--;
+      updateScreenshotDisplay();
+    }
+  }
+
+  async function saveToExcel() {
+    if (screenshotFiles.length > 0) {
+      const filename = screenshotFiles[currentScreenshotIndex];
+      const url = filename.replace(".png", "");
+      try {
+        await WriteBusinessUrlToExcelDatabase(url);
+        alert(`Gespeichert: ${url}`);
+      } catch (error) {
+        alert(`Fehler beim Speichern: ${error}`);
+      }
+    }
   }
 </script>
 
 <Tabs
   tabs={[
     { id: "website_search", label: "Webseiten suchen" },
-    { id: "analyse_screenshots", label: "Bilder analysieren" }
+    { id: "analyse_screenshots", label: "Bilder analysieren" },
   ]}
   canOpenAnalyse={searchDone}
 >
@@ -196,7 +268,9 @@
       <div class="form">
         <div class="grid">
           <div class="field">
-            <label class="field-label" for="industries-select">🏭 Industrie:</label>
+            <label class="field-label" for="industries-select"
+              >🏭 Industrie:</label
+            >
             <select
               bind:value={selectedIndustry}
               required
@@ -208,7 +282,9 @@
                 <option value={industry}>{industry}</option>
               {/each}
             </select>
-            <label for="industries-select">⏳ Zuletzt gesucht: {lastSearchedIndustry}</label>
+            <label for="industries-select"
+              >⏳ Zuletzt gesucht: {lastSearchedIndustry}</label
+            >
           </div>
 
           <div class="field">
@@ -223,7 +299,11 @@
         </div>
 
         <div class="controls">
-          <button class="btn btn--primary" on:click={main} disabled={!searchButtonActive}>
+          <button
+            class="btn btn--primary"
+            on:click={main}
+            disabled={!searchButtonActive}
+          >
             <span class="btn-icon" aria-hidden="true">🔎</span>
             <span>Suchen</span>
           </button>
@@ -258,8 +338,67 @@
     </section>
   </div>
 
-  <div slot="analyse_screenshots">
-    <h1>Analyse Screenshots</h1>
+  <div class="analyse-page" slot="analyse_screenshots">
+    <section class="card analyse-card">
+      <div class="image-viewer">
+        {#if screenshotFiles.length > 0 && currentScreenshotBase64}
+          <img
+            src={`data:image/png;base64,${currentScreenshotBase64}`}
+            alt="Screenshot"
+          />
+        {:else}
+          <div class="placeholder-text">Keine Screenshots gefunden.</div>
+        {/if}
+      </div>
+
+      <div class="viewer-controls">
+        <span class="label left">
+          {screenshotFiles.length > 0
+            ? `${currentScreenshotIndex + 1}/${screenshotFiles.length}`
+            : "0/0"}
+        </span>
+
+        <span class="label left">
+          {screenshotFiles.length > 0
+            ? `${Math.round(((currentScreenshotIndex + 1) / screenshotFiles.length) * 100)}%`
+            : "0%"}
+        </span>
+
+        <div class="buttons">
+          <button
+            class="btn btn--primary btn--icon"
+            on:click={prevScreenshot}
+            disabled={currentScreenshotIndex === 0 ||
+              screenshotFiles.length === 0}
+          >
+            ←
+          </button>
+
+          <button
+            class="btn btn--primary btn--icon"
+            on:click={nextScreenshot}
+            disabled={currentScreenshotIndex === screenshotFiles.length - 1 ||
+              screenshotFiles.length === 0}
+          >
+            →
+          </button>
+
+          <button
+            class="btn btn--primary"
+            on:click={saveToExcel}
+            disabled={screenshotFiles.length === 0}
+          >
+            💾 In Excel speichern
+          </button>
+        </div>
+
+        <span class="label right url-label">
+          {screenshotFiles.length > 0
+            ? screenshotFiles[currentScreenshotIndex].replace(".png", "")
+            : "---"}
+        </span>
+      </div>
+    </section>
   </div>
 </Tabs>
 
@@ -431,5 +570,86 @@
     .toggle {
       margin-left: 0;
     }
+    .viewer-controls {
+      flex-direction: column;
+      gap: 12px;
+    }
+    .label.right {
+      margin-left: 0;
+      text-align: center;
+    }
+  }
+
+  .analyse-page {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    padding-bottom: 2rem;
+  }
+
+  .analyse-card {
+    width: min(900px, 95vw);
+    height: 80vh;
+    display: flex;
+    flex-direction: column;
+    padding: 16px;
+    gap: 16px;
+  }
+
+  .image-viewer {
+    flex: 1;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f5f5f5;
+  }
+
+  .image-viewer img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .placeholder-text {
+    color: #888;
+    font-size: 1.2rem;
+  }
+
+  .viewer-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 0;
+    flex-wrap: wrap;
+  }
+
+  .buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  .btn--icon {
+    width: 42px;
+    padding: 0;
+    font-size: 1.2rem;
+  }
+
+  .label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #444;
+    white-space: nowrap;
+  }
+
+  .url-label {
+    flex: 1;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 </style>
