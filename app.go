@@ -2,6 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/base64"
+	"os"
+	"path/filepath"
+	"strings"
 	"sync"
 
 	"website-lead-automation-go/backend"
@@ -70,4 +74,36 @@ func (a *App) TakeScreenshotOfWebsite(url string, headless bool) (string, error)
 
 func (a *App) ResetScreenshotsDir() error {
 	return backend.ResetScreenshotsDir()
+}
+
+func (a *App) GetScreenshotFilenames() ([]string, error) {
+	dir := "website_screenshots"
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return []string{}, nil
+		}
+		return nil, err
+	}
+
+	var filenames []string
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".png") {
+			filenames = append(filenames, entry.Name())
+		}
+	}
+	return filenames, nil
+}
+
+func (a *App) GetScreenshotBase64(filename string) (string, error) {
+	path := filepath.Join("website_screenshots", filename)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(data), nil
+}
+
+func (a *App) WriteBusinessUrlToExcelDatabase(websiteUrl string) error {
+	return backend.WriteBusinessUrlToExcelDatabase(websiteUrl)
 }

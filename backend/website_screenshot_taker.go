@@ -21,25 +21,27 @@ func ResetScreenshotsDir() error {
 var invalidFileChars = regexp.MustCompile(`[<>:"/\\|?*\x00-\x1F]`)
 
 func safeFilenameFromURL(raw string) string {
-	u, err := url.Parse(raw)
+	uStr := raw
+	if !strings.HasPrefix(uStr, "http://") && !strings.HasPrefix(uStr, "https://") {
+		uStr = "http://" + uStr
+	}
+
+	u, err := url.Parse(uStr)
+	var host string
 	if err != nil || u.Host == "" {
-		s := invalidFileChars.ReplaceAllString(raw, "_")
-		return strings.Trim(s, "._ ")
+		host = raw
+	} else {
+		host = u.Hostname()
 	}
 
-	host := u.Hostname()
-	path := strings.Trim(u.EscapedPath(), "/")
-
-	name := host
-	if path != "" {
-		name += "_" + strings.ReplaceAll(path, "/", "_")
-	}
+	host = strings.TrimPrefix(host, "www.")
+	name := "www." + host
 
 	name = invalidFileChars.ReplaceAllString(name, "_")
 	name = strings.Trim(name, "._ ")
 
-	if name == "" {
-		name = "website"
+	if name == "" || name == "www" {
+		name = "www.website"
 	}
 	return name
 }
@@ -93,7 +95,12 @@ func TakeScreenshotOfWebsite(ctx context.Context, websiteURL string, headless bo
 		return "", err
 	}
 
-	_, err = page.Goto(websiteURL, playwright.PageGotoOptions{
+	navURL := websiteURL
+	if !strings.HasPrefix(navURL, "http://") && !strings.HasPrefix(navURL, "https://") {
+		navURL = "http://" + navURL
+	}
+
+	_, err = page.Goto(navURL, playwright.PageGotoOptions{
 		WaitUntil: playwright.WaitUntilStateDomcontentloaded,
 		Timeout:   playwright.Float(20000),
 	})
@@ -114,7 +121,7 @@ func TakeScreenshotOfWebsite(ctx context.Context, websiteURL string, headless bo
 
 	_, err = page.Screenshot(playwright.PageScreenshotOptions{
 		Path:     playwright.String(outPath),
-		FullPage: playwright.Bool(true),
+		FullPage: playwright.Bool(false),
 	})
 	if err != nil {
 		return "", err
