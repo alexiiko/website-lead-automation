@@ -40,6 +40,8 @@
   let searchDone = false;
   let searchAborted = false;
 
+  let currentTab = "website_search";
+
   let screenshotFiles = [];
   let currentScreenshotIndex = 0;
   let currentScreenshotBase64 = "";
@@ -248,13 +250,25 @@
       const url = filename.replace(".png", "");
       try {
         await WriteBusinessUrlToExcelDatabase(url);
-        alert(`Gespeichert: ${url}`);
-      } catch (error) {
-        alert(`Fehler beim Speichern: ${error}`);
+      } catch (error) {}
+    }
+  }
+
+  function handleKeydown(event) {
+    if (currentTab === "analyse_screenshots" && screenshotFiles.length > 0) {
+      if (event.key === "ArrowRight") {
+        nextScreenshot();
+      } else if (event.key === "ArrowLeft") {
+        prevScreenshot();
+      } else if (event.key === "Enter") {
+        saveToExcel();
+        nextScreenshot();
       }
     }
   }
 </script>
+
+<svelte:window on:keydown={handleKeydown} />
 
 <Tabs
   tabs={[
@@ -262,6 +276,7 @@
     { id: "analyse_screenshots", label: "Bilder analysieren" },
   ]}
   canOpenAnalyse={searchDone}
+  bind:active={currentTab}
 >
   <div class="page" slot="website_search">
     <section class="card">
@@ -339,66 +354,70 @@
   </div>
 
   <div class="analyse-page" slot="analyse_screenshots">
-    <section class="card analyse-card">
-      <div class="image-viewer">
-        {#if screenshotFiles.length > 0 && currentScreenshotBase64}
-          <img
-            src={`data:image/png;base64,${currentScreenshotBase64}`}
-            alt="Screenshot"
-          />
-        {:else}
-          <div class="placeholder-text">Keine Screenshots gefunden.</div>
-        {/if}
-      </div>
-
-      <div class="viewer-controls">
-        <span class="label left">
-          {screenshotFiles.length > 0
-            ? `${currentScreenshotIndex + 1}/${screenshotFiles.length}`
-            : "0/0"}
-        </span>
-
-        <span class="label left">
-          {screenshotFiles.length > 0
-            ? `${Math.round(((currentScreenshotIndex + 1) / screenshotFiles.length) * 100)}%`
-            : "0%"}
-        </span>
-
-        <div class="buttons">
-          <button
-            class="btn btn--primary btn--icon"
-            on:click={prevScreenshot}
-            disabled={currentScreenshotIndex === 0 ||
-              screenshotFiles.length === 0}
-          >
-            ←
-          </button>
-
-          <button
-            class="btn btn--primary btn--icon"
-            on:click={nextScreenshot}
-            disabled={currentScreenshotIndex === screenshotFiles.length - 1 ||
-              screenshotFiles.length === 0}
-          >
-            →
-          </button>
-
-          <button
-            class="btn btn--primary"
-            on:click={saveToExcel}
-            disabled={screenshotFiles.length === 0}
-          >
-            💾 In Excel speichern
-          </button>
+    <div class="analyse-container">
+      <section class="card image-card">
+        <div class="image-viewer">
+          {#if screenshotFiles.length > 0 && currentScreenshotBase64}
+            <img
+              src={`data:image/png;base64,${currentScreenshotBase64}`}
+              alt="Screenshot"
+            />
+          {:else}
+            <div class="placeholder-text">Keine Screenshots gefunden.</div>
+          {/if}
         </div>
+      </section>
 
-        <span class="label right url-label">
-          {screenshotFiles.length > 0
-            ? screenshotFiles[currentScreenshotIndex].replace(".png", "")
-            : "---"}
-        </span>
-      </div>
-    </section>
+      <section class="controls-card">
+        <div class="viewer-controls">
+          <span class="label left">
+            {screenshotFiles.length > 0
+              ? `${currentScreenshotIndex + 1}/${screenshotFiles.length}`
+              : "0/0"}
+          </span>
+
+          <span class="label left">
+            {screenshotFiles.length > 0
+              ? `${Math.round(((currentScreenshotIndex + 1) / screenshotFiles.length) * 100)}%`
+              : "0%"}
+          </span>
+
+          <div class="buttons">
+            <button
+              class="btn btn--primary btn--icon"
+              on:click={prevScreenshot}
+              disabled={currentScreenshotIndex === 0 ||
+                screenshotFiles.length === 0}
+            >
+              ←
+            </button>
+
+            <button
+              class="btn btn--primary btn--icon"
+              on:click={nextScreenshot}
+              disabled={currentScreenshotIndex === screenshotFiles.length - 1 ||
+                screenshotFiles.length === 0}
+            >
+              →
+            </button>
+
+            <button
+              class="btn btn--primary"
+              on:click={saveToExcel}
+              disabled={screenshotFiles.length === 0}
+            >
+              💾 In Excel speichern
+            </button>
+          </div>
+
+          <span class="label right url-label">
+            {screenshotFiles.length > 0
+              ? screenshotFiles[currentScreenshotIndex].replace(".png", "")
+              : "---"}
+          </span>
+        </div>
+      </section>
+    </div>
   </div>
 </Tabs>
 
@@ -492,6 +511,13 @@
     justify-content: center;
     font-weight: 600;
     white-space: nowrap;
+    transition: all 0.2s ease;
+  }
+
+  .btn:hover:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+    border-color: rgba(0, 0, 0, 0.25);
   }
 
   .btn:disabled {
@@ -587,13 +613,29 @@
     padding-bottom: 2rem;
   }
 
-  .analyse-card {
+  .analyse-container {
     width: min(900px, 95vw);
     height: 80vh;
     display: flex;
     flex-direction: column;
-    padding: 16px;
     gap: 16px;
+  }
+
+  .image-card {
+    flex: 1;
+    display: flex;
+    margin: 0;
+    padding: 16px;
+    /* The global .card adds min(760px), but .analyse-container bounds it here */
+    width: 100%;
+  }
+
+  .controls-card {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
   }
 
   .image-viewer {
@@ -620,11 +662,13 @@
 
   .viewer-controls {
     display: flex;
+    width: 100%;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 8px 0;
+    padding: 0;
     flex-wrap: wrap;
+    border-top: none;
   }
 
   .buttons {

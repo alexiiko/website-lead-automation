@@ -7,7 +7,7 @@
   // allow switching to analyse tab only when true
   export let canOpenAnalyse = false;
 
-  let active = tabs[0].id;
+  export let active = tabs[0].id;
 
   $: isDisabled = (tab) => {
     return tab.id === "analyse_screenshots" && !canOpenAnalyse;
