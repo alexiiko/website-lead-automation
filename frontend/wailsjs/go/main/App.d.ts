@@ -7,7 +7,11 @@ export function GetScreenshotBase64(arg1:string):Promise<string>;
 
 export function GetScreenshotFilenames():Promise<Array<string>>;
 
+export function LoadImageIndex():Promise<number>;
+
 export function ResetScreenshotsDir():Promise<void>;
+
+export function SaveImageIndex(arg1:number):Promise<void>;
 
 export function SearchForWebsites(arg1:string,arg2:string,arg3:boolean):Promise<Array<string>>;
 

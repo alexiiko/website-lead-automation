@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -106,4 +107,22 @@ func (a *App) GetScreenshotBase64(filename string) (string, error) {
 
 func (a *App) WriteBusinessUrlToExcelDatabase(websiteUrl string) error {
 	return backend.WriteBusinessUrlToExcelDatabase(websiteUrl)
+}
+
+const imageIndexFile = "image_index.txt"
+
+func (a *App) SaveImageIndex(index int) error {
+	return os.WriteFile(imageIndexFile, []byte(strconv.Itoa(index)), 0644)
+}
+
+func (a *App) LoadImageIndex() int {
+	data, err := os.ReadFile(imageIndexFile)
+	if err != nil {
+		return 0
+	}
+	index, err := strconv.Atoi(strings.TrimSpace(string(data)))
+	if err != nil {
+		return 0
+	}
+	return index
 }

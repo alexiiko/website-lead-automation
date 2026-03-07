@@ -14,8 +14,16 @@ export function GetScreenshotFilenames() {
   return window['go']['main']['App']['GetScreenshotFilenames']();
 }
 
+export function LoadImageIndex() {
+  return window['go']['main']['App']['LoadImageIndex']();
+}
+
 export function ResetScreenshotsDir() {
   return window['go']['main']['App']['ResetScreenshotsDir']();
+}
+
+export function SaveImageIndex(arg1) {
+  return window['go']['main']['App']['SaveImageIndex'](arg1);
 }
 
 export function SearchForWebsites(arg1, arg2, arg3) {

@@ -9,6 +9,8 @@
   import { GetScreenshotFilenames } from "../wailsjs/go/main/App";
   import { GetScreenshotBase64 } from "../wailsjs/go/main/App";
   import { WriteBusinessUrlToExcelDatabase } from "../wailsjs/go/main/App";
+  import { SaveImageIndex } from "../wailsjs/go/main/App";
+  import { LoadImageIndex } from "../wailsjs/go/main/App";
 
   import data from "./data.json";
   let availableIndustries = data[0].industries;
@@ -48,6 +50,7 @@
   let screenshotFiles = [];
   let currentScreenshotIndex = 0;
   let currentScreenshotBase64 = "";
+  let amountSavedToExcel = 0;
 
   function lsGet(key, fallback = "") {
     try {
@@ -170,6 +173,8 @@
     setSearchDone(false);
 
     screenshotProgress = 0;
+    amountSavedToExcel = 0;
+    currentScreenshotIndex = 0;
     await ResetScreenshotsDir();
 
     setLastSearchedIndustry(selectedIndustry);
@@ -196,7 +201,9 @@
       if (searchAborted) break;
 
       const websiteUrl = websiteUrls[index];
-      statusTextScreenshots = `Bei Website: ${websiteUrl} \n${index + 1}/${websiteUrls.length}`;
+      let currentFiles = await GetScreenshotFilenames();
+      statusTextScreenshots = `Bei Website: ${websiteUrl} \n${currentFiles.length} gespeichert.`;
+
       let success = await takeScreenShotsOfWebsite(websiteUrl);
       if (success) {
         screenshotProgress++;
@@ -204,7 +211,8 @@
     }
 
     if (!searchAborted) {
-      statusTextScreenshots = `${screenshotProgress} Screenshots von ${websiteUrls.length} Webseiten gemacht!`;
+      let finalFiles = await GetScreenshotFilenames();
+      statusTextScreenshots = `${finalFiles.length} Screenshots von ${websiteUrls.length} Webseiten gemacht!`;
       setSearchDone(true);
       loadScreenshots();
     } else {
@@ -220,7 +228,11 @@
     try {
       screenshotFiles = await GetScreenshotFilenames();
       if (screenshotFiles.length > 0) {
-        currentScreenshotIndex = 0;
+        let savedIndex = await LoadImageIndex();
+        if (savedIndex < 0 || savedIndex >= screenshotFiles.length) {
+          savedIndex = 0;
+        }
+        currentScreenshotIndex = savedIndex;
         await updateScreenshotDisplay();
       }
     } catch (error) {
@@ -238,6 +250,8 @@
         currentScreenshotBase64 = await GetScreenshotBase64(
           screenshotFiles[currentScreenshotIndex],
         );
+        // Persist current index to backend file
+        await SaveImageIndex(currentScreenshotIndex);
       } catch (error) {
         console.error("Error loading screenshot base64:", error);
       }
@@ -264,11 +278,18 @@
       const url = filename.replace(".png", "");
       try {
         await WriteBusinessUrlToExcelDatabase(url);
-      } catch (error) {}
+        amountSavedToExcel++;
+        // Optional: you can show a subtle alert or log, but it might get spammy if pressing enter fast
+        console.log(`Gespeichert: ${url}`);
+      } catch (error) {
+        alert(`Fehler beim Speichern: ${error}`);
+      }
     }
   }
 
   function handleKeydown(event) {
+    if (event.repeat) return;
+
     if (currentTab === "analyse_screenshots" && screenshotFiles.length > 0) {
       if (event.key === "ArrowRight") {
         nextScreenshot();
@@ -425,6 +446,12 @@
             >
               💾 In Excel speichern
             </button>
+            <span
+              class="label left"
+              style="display:flex; align-items:center; margin-left: 8px;"
+            >
+              Gespeichert: {amountSavedToExcel}
+            </span>
           </div>
 
           <span class="label right url-label">
