@@ -14,6 +14,7 @@
 
   import data from "./data.json";
   let availableIndustries = data[0].industries;
+  let availableCities = data[1].cities;
 
   const LS = {
     lastIndustry: "lsa:lastSearchedIndustry",
@@ -28,7 +29,7 @@
   let selectedIndustry = "Autoreparaturen";
   let lastSearchedIndustry = "";
 
-  let city = "Merseburg";
+  let city = "Flensburg";
   let lastSearchedCity = "";
 
   let statusText = "";
@@ -338,14 +339,19 @@
           </div>
 
           <div class="field">
-            <label class="field-label" for="city-input">🏙️ Stadt:</label>
-            <input
-              id="city-input"
-              disabled={!searchButtonActive}
+            <label class="field-label" for="city-select">🏙️ Stadt:</label>
+            <select
               bind:value={city}
-              placeholder="Berlin"
-            />
-            <label for="city-input"
+              required
+              disabled={!searchButtonActive}
+              name="cities"
+              id="city-select"
+            >
+              {#each availableCities as c}
+                <option value={c}>{c}</option>
+              {/each}
+            </select>
+            <label for="city-select"
               >⏳ Zuletzt gesucht: {lastSearchedCity}</label
             >
           </div>
