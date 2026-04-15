@@ -176,6 +176,7 @@
     screenshotProgress = 0;
     amountSavedToExcel = 0;
     currentScreenshotIndex = 0;
+    await SaveImageIndex(0);
     await ResetScreenshotsDir();
 
     setLastSearchedIndustry(selectedIndustry);
